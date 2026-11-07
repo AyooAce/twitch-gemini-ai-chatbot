@@ -247,6 +247,7 @@ function addLeadingTargetTag(text, actor) {
     if (!actor.username || stripLeadingTargetTag(value, actor) !== value) return value;
     return `@${actor.username} ${value}`.trim();
 }
+
 classify(message = {}, botUserId = this.transport?.botUserId) {
     const text = String(message.text ?? '');
     const lower = text.toLowerCase().trim();
@@ -270,8 +271,8 @@ classify(message = {}, botUserId = this.transport?.botUserId) {
 
     const isReplyToBot =
         message.isReply &&
-        String(message.replyParentUserId || '') === String(botUserId || '') &&
-        !!botUserId;
+        !!botUserId &&
+        String(message.replyParentUserId || '') === String(botUserId);
 
     if (aiCommand || isReplyToBot) {
         return { kind: 'ai', command: aiCommand || null };
@@ -281,28 +282,9 @@ classify(message = {}, botUserId = this.transport?.botUserId) {
         return { kind: 'ai', command: null, ambient: true };
     }
 
-    return { kind: 'none' };}
+    return { kind: 'none' };
+}
 
-        if (message.isReply) {
-            const parentUserId = String(message.replyParentUserId || '');
-            if (!parentUserId || !botUserId || parentUserId !== String(botUserId)) {
-                return { kind: 'none' };
-            }
-        }
-
-        const custom = this.customCommands.match(text);
-        if (custom) return { kind: 'custom', command: custom.cmd, custom };
-
-        const media = this.matcher.matchMedia(lower);
-        if (media) return { kind: 'media', command: media.cmd, mediaType: media.mediaType, media };
-
-        const aiCommand = this.matcher.matchAi(lower);
-        if (aiCommand || message.isReply) {
-            return { kind: 'ai', command: aiCommand || null };
-        }
-
-        return { kind: 'none' };
-    }
 
     /**
      * Binds inbound chat messages and EventSub events. Returns an unsubscribe function.
@@ -323,7 +305,7 @@ classify(message = {}, botUserId = this.transport?.botUserId) {
                 console.error('[ChatRouter] Routing failed:', error);
                 return { kind: 'error', channel: message?.channel, sent: false };
             });
-        };
+};
 
         const onEvent = (event) => {
             if (!listening) return undefined;
