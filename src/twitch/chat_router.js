@@ -248,24 +248,20 @@ function addLeadingTargetTag(text, actor) {
     return `@${actor.username} ${value}`.trim();
 }
 
-classify(message = {}, botUserId = this.transport?.botUserId) {
+ChatRouter.prototype.classify = function(message = {}, botUserId = this.transport?.botUserId) {
     const text = String(message.text ?? '');
     const lower = text.toLowerCase().trim();
 
-    if (!text.trim()) return { kind: 'none' };
-
-    const custom = this.customCommands.match(text);
-    if (custom) return { kind: 'custom', command: custom.cmd, custom };
-
-    const media = this.matcher.matchMedia(lower);
-    if (media) {
-        return {
-            kind: 'media',
-            command: media.cmd,
-            mediaType: media.mediaType,
-            media
-        };
+        if (aiCommand || isReplyToBot) {
+        return { kind: 'ai', command: aiCommand || null };
     }
+
+    if (this.replyMode === 'all') {
+        return { kind: 'ai', command: null, ambient: true };
+    }
+
+    return { kind: 'none' };
+};
 
     const aiCommand = this.matcher.matchAi(lower);
 
