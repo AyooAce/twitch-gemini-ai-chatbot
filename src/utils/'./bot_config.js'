@@ -1,4 +1,5 @@
 // src/utils/error_handler.js
+
 import { FACTORY } from './bot_config.js';
 
 const HARD_FALLBACK = '❌ Unknown Error';
