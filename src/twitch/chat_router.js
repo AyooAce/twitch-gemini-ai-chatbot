@@ -206,20 +206,17 @@ function mediaAccessAllowed(message, access) {
         case 'vipmod': return isBroadcaster || isMod || isVip;
         case 'subs': return isBroadcaster || isMod || isVip || isSub;
         default: return true;
-    }
-}
-
-function userHasRole({ isBroadcaster, isMod } = {}, requiredRole) {
+    function userHasRole({ isBroadcaster, isMod } = {}, requiredRole) {
     if (!requiredRole || requiredRole === 'all') return true;
     if (requiredRole === 'broadcaster') return !!isBroadcaster;
     return !!isBroadcaster || !!isMod;
-
-
-    : FACTORY.bot_settings.reply_mode,function normalizeReplyMode(value) {
-    return REPLY_MODES.has(value) ? value : 'all';
 }
 
-function deliveryActor(trigger = {}) {
+const REPLY_MODES = new Set(['off', 'tag', 'reply', 'all']);
+
+function normalizeReplyMode(value) {
+    return REPLY_MODES.has(value) ? value : 'all';
+}function deliveryActor(trigger = {}) 
     trigger = trigger || {};
     const username = String(trigger.username || trigger.displayName || '').replace(/^@/, '').trim();
     const loginName = cleanName(trigger.loginName || trigger.login || '');
