@@ -215,8 +215,9 @@ function mediaAccessAllowed(message, access) {
 const REPLY_MODES = new Set(['off', 'tag', 'reply', 'all']);
 
 function normalizeReplyMode(value) {
-    return REPLY_MODES.has(value) ? value : 'all';
-}function deliveryActor(trigger = {}) 
+     return REPLY_MODES.has(value) ? value : 'all';
+    }
+    function deliveryActor(trigger = {}) {
     trigger = trigger || {};
     const username = String(trigger.username || trigger.displayName || '').replace(/^@/, '').trim();
     const loginName = cleanName(trigger.loginName || trigger.login || '');
