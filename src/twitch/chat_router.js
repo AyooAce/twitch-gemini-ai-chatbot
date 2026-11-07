@@ -206,7 +206,7 @@ function mediaAccessAllowed(message, access) {
         case 'vipmod': return isBroadcaster || isMod || isVip;
         case 'subs': return isBroadcaster || isMod || isVip || isSub;
         default: return true;
-    function userHasRole({ isBroadcaster, isMod } = {}, requiredRole) {
+    function userHasRole(){ isBroadcaster, isMod } = {}, requiredRole) {
     if (!requiredRole || requiredRole === 'all') return true;
     if (requiredRole === 'broadcaster') return !!isBroadcaster;
     return !!isBroadcaster || !!isMod;
