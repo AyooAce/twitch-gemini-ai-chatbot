@@ -511,7 +511,7 @@ export class ChatRouter {
      */
     #replyBudget(trigger) {
         const { username } = deliveryActor(trigger);
-        const tagLength = this.replyMode !== 'off' && username ? username.length + 2 : 0;
+        const tagLength = this.replyMode !== 'all' && username ? username.length + 2 : 0;
         return { maxLength: this.maxMessageLength - tagLength };
     }
 
@@ -525,7 +525,7 @@ export class ChatRouter {
         const actor = deliveryActor(trigger);
         const messageId = String(trigger.messageId || '');
         const effectiveMode = this.replyMode === 'reply' && !messageId
-            ? (actor.username ? 'tag' : 'off')
+            ? (actor.username ? 'tag' : 'all')
             : this.replyMode;
 
         const prepare = (mode) => {
