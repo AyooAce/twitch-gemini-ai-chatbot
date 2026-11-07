@@ -218,7 +218,7 @@ function userHasRole({ isBroadcaster, isMod } = {}, requiredRole) {
 reply_mode: REPLY_MODES.has(env.REPLY_MODE)
     ? env.REPLY_MODE
     : FACTORY.bot_settings.reply_mode,function normalizeReplyMode(value) {
-    return REPLY_MODES.has(value) ? value : 'off';
+    return REPLY_MODES.has(value) ? value : 'all';
 }
 
 function deliveryActor(trigger = {}) {
