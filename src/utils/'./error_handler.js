@@ -1,9 +1,9 @@
 // src/utils/error_handler.js
 
+import fs from 'node:fs';
 import { FACTORY } from './bot_config.js';
 
 const HARD_FALLBACK = '❌ Unknown Error';
-const INFO_CATEGORY = 'info';
 const RETRYABLE_CATEGORIES = new Set(['quota', 'network', 'server']);
 
 const KEY_CATEGORY = {
