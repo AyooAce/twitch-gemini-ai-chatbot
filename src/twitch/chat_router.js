@@ -194,6 +194,7 @@ function normalizedCommandList(cfg) {
     return raw.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean);
 }
 
+
 function mediaAccessAllowed(message, access) {
     if (!access || access === 'everyone') return true;
     const badges = message?.tags?.badges || {};
@@ -201,12 +202,16 @@ function mediaAccessAllowed(message, access) {
     const isMod = badges.moderator != null || !!message?.isMod;
     const isVip = badges.vip != null;
     const isSub = badges.subscriber != null || badges.sub != null;
+
     switch (access) {
         case 'mod': return isBroadcaster || isMod;
         case 'vipmod': return isBroadcaster || isMod || isVip;
         case 'subs': return isBroadcaster || isMod || isVip || isSub;
         default: return true;
-    function userHasRole(){ isBroadcaster, isMod } = {}, requiredRole) {
+    }
+}
+
+function userHasRole({ isBroadcaster, isMod } = {}, requiredRole) {
     if (!requiredRole || requiredRole === 'all') return true;
     if (requiredRole === 'broadcaster') return !!isBroadcaster;
     return !!isBroadcaster || !!isMod;
@@ -215,12 +220,14 @@ function mediaAccessAllowed(message, access) {
 const REPLY_MODES = new Set(['off', 'tag', 'reply', 'all']);
 
 function normalizeReplyMode(value) {
-     return REPLY_MODES.has(value) ? value : 'all';
-    }
-    function deliveryActor(trigger = {}) {
+    return REPLY_MODES.has(value) ? value : 'all';
+}
+
+function deliveryActor(trigger = {}) {
     trigger = trigger || {};
     const username = String(trigger.username || trigger.displayName || '').replace(/^@/, '').trim();
     const loginName = cleanName(trigger.loginName || trigger.login || '');
+
     return {
         username: username || loginName,
         loginName,
@@ -240,141 +247,7 @@ function addLeadingTargetTag(text, actor) {
     if (!actor.username || stripLeadingTargetTag(value, actor) !== value) return value;
     return `@${actor.username} ${value}`.trim();
 }
-
-export class ChatRouter {
-    #systemInstructions = '';
-
-    /**
-     * @param {object} options collaborator instances and policy. Never reads environment variables.
-     */
-    constructor({
-        aiEngine,
-        mediaPipeline,
-        emotePool,
-        errorHandler,
-        customCommands,
-        eventAlerts,
-        systemInstructions,
-        cooldownDuration = 1,
-        chatContextLength = 20,
-        maxMessageLength = 499,
-        prefixes = {},
-        mediaCommands = null,
-        replyMode = 'all',
-        ignoreEmoteOnlyPrompts = true,
-        clock = Date.now,
-        executionTrace = NOOP_EXECUTION_TRACE
-    } = {}) {
-        if (!aiEngine || !mediaPipeline || !emotePool) {
-            throw new Error('ChatRouter requires aiEngine, mediaPipeline, and emotePool');
-        }
-
-        this.aiEngine = aiEngine;
-        this.mediaPipeline = mediaPipeline;
-        this.emotePool = emotePool;
-        this.errorHandler = errorHandler;
-        if (!errorHandler) {
-            console.warn('[ChatRouter] No errorHandler provided; error immunity is degraded.');
-        }
-
-        this.clock = clock;
-        this.chatContextLength = chatContextLength;
-        this.maxMessageLength = maxMessageLength;
-        this.replyMode = normalizeReplyMode(replyMode);
-        this.ignoreEmoteOnlyPrompts = ignoreEmoteOnlyPrompts !== false;
-        this.executionTrace = executionTrace || NOOP_EXECUTION_TRACE;
-        this.transport = null;
-
-        this.#systemInstructions = typeof systemInstructions === 'string' ? systemInstructions : FACTORY.system_instructions;
-
-        this.prefixLists = {
-            ai: asPrefixList(prefixes.ai, DEFAULT_PREFIXES.ai),
-            image: asPrefixList(prefixes.image, DEFAULT_PREFIXES.image),
-            video: asPrefixList(prefixes.video, DEFAULT_PREFIXES.video),
-            tts: asPrefixList(prefixes.tts, DEFAULT_PREFIXES.tts),
-            music: asPrefixList(prefixes.music, DEFAULT_PREFIXES.music)
-        };
-
-        this.cooldowns = new CooldownTracker({ duration: cooldownDuration, clock });
-        this.customCommands = new CustomCommandRegistry({ customCommands });
-        this.eventAlerts = new EventAlertRegistry({ eventAlerts });
-        this.eventCooldowns = new EventCooldownTracker({ clock });
-
-        // Media command settings from config:commands.media are the live source of
-        // truth; the prefix lists above remain as boot fallback when no config exists.
-        this.mediaCommands = mediaCommands && typeof mediaCommands === 'object'
-            ? { ...structuredClone(FACTORY.commands.media), ...mediaCommands }
-            : null;
-        if (this.mediaCommands) {
-            this.#rebuildMediaRouting();
-        } else {
-            this.matcher = new CommandMatcher(this.prefixLists.ai, entriesFromPrefixLists(this.prefixLists));
-        }
-    }
-
-    /**
-     * Live view of the response cooldown seconds. WebServer assigns this on
-     * dashboard saves so config:bot_settings.cooldown_duration hot-applies.
-     */
-    get cooldownDuration() {
-        return this.cooldowns.duration;
-    }
-
-    set cooldownDuration(seconds) {
-        this.cooldowns.duration = typeof seconds === 'number' ? seconds : 1;
-    }
-
-    reloadReplyMode(value) {
-        this.replyMode = normalizeReplyMode(value);
-    }
-
-    reloadIgnoreEmoteOnlyPrompts(value) {
-        this.ignoreEmoteOnlyPrompts = value !== false;
-    }
-
-    #rebuildMediaRouting() {
-        const entries = [];
-        for (const type of MEDIA_TYPES) {
-            const cfg = this.mediaCommands?.[type];
-            const all = normalizedCommandList(cfg);
-            const enabled = cfg && cfg.enabled === false ? [] : all;
-            for (const cmd of all) {
-                entries.push({ cmd, mediaType: type, enabled: enabled.includes(cmd) });
-            }
-            this.prefixLists[type] = enabled;
-        }
-        this.matcher = new CommandMatcher(this.prefixLists.ai, entries);
-    }
-
-    /**
-     * Hot-reloads generative media command settings (names, aliases, enabled flags,
-     * trigger, aliases, enabled state, and access from config:commands.media.
-     * @param {object} media sanitized commands.media object
-     */
-    reloadMediaCommands(media) {
-        if (!media || typeof media !== 'object') return;
-        this.mediaCommands = { ...structuredClone(FACTORY.commands.media), ...media };
-        this.#rebuildMediaRouting();
-    }
-
-    /**
-     * Hot-reloads AI command prefixes from config:bot_settings.bot_command_name,
-     * keeping media routing untouched.
-     * @param {string} nameCsv comma-separated trigger list
-     */
-    reloadAiPrefixes(nameCsv) {
-        const next = asPrefixList(nameCsv, []);
-        if (next.length === 0) return;
-        this.prefixLists.ai = next;
-        this.matcher = new CommandMatcher(next, this.matcher.media);
-    }
-
-    /**
-     * Classifies invocation intent once for both ambient projection and routing.
-     * Native reply identity is a transport-normalized fact; only the direct
-     * parent Twitch user ID participates in bot-target detection.
-     */
-    classify(message = {}, botUserId = this.transport?.botUserId) {
+classify(message = {}, botUserId = this.transport?.botUserId) {
     const text = String(message.text ?? '');
     const lower = text.toLowerCase().trim();
 
