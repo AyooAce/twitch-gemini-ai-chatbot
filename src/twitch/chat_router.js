@@ -213,11 +213,11 @@ function userHasRole({ isBroadcaster, isMod } = {}, requiredRole) {
     if (!requiredRole || requiredRole === 'all') return true;
     if (requiredRole === 'broadcaster') return !!isBroadcaster;
     return !!isBroadcaster || !!isMod;
-}
 
-const REPLY_MODES = new Set(['off', 'tag', 'reply']);
 
-function normalizeReplyMode(value) {
+reply_mode: REPLY_MODES.has(env.REPLY_MODE)
+    ? env.REPLY_MODE
+    : FACTORY.bot_settings.reply_mode,function normalizeReplyMode(value) {
     return REPLY_MODES.has(value) ? value : 'off';
 }
 
