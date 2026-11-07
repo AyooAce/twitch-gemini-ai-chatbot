@@ -377,8 +377,40 @@ export class ChatRouter {
      * parent Twitch user ID participates in bot-target detection.
      */
     classify(message = {}, botUserId = this.transport?.botUserId) {
-        const text = String(message.text ?? '');
-        const lower = text.toLowerCase();
+    const text = String(message.text ?? '');
+    const lower = text.toLowerCase().trim();
+
+    if (!text.trim()) return { kind: 'none' };
+
+    const custom = this.customCommands.match(text);
+    if (custom) return { kind: 'custom', command: custom.cmd, custom };
+
+    const media = this.matcher.matchMedia(lower);
+    if (media) {
+        return {
+            kind: 'media',
+            command: media.cmd,
+            mediaType: media.mediaType,
+            media
+        };
+    }
+
+    const aiCommand = this.matcher.matchAi(lower);
+
+    const isReplyToBot =
+        message.isReply &&
+        String(message.replyParentUserId || '') === String(botUserId || '') &&
+        !!botUserId;
+
+    if (aiCommand || isReplyToBot) {
+        return { kind: 'ai', command: aiCommand || null };
+    }
+
+    if (this.replyMode === 'all') {
+        return { kind: 'ai', command: null, ambient: true };
+    }
+
+    return { kind: 'none' };}
 
         if (message.isReply) {
             const parentUserId = String(message.replyParentUserId || '');
