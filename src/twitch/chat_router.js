@@ -264,7 +264,7 @@ export class ChatRouter {
         maxMessageLength = 499,
         prefixes = {},
         mediaCommands = null,
-        replyMode = 'off',
+        replyMode = 'all',
         ignoreEmoteOnlyPrompts = true,
         clock = Date.now,
         executionTrace = NOOP_EXECUTION_TRACE
