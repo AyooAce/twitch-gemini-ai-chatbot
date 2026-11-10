@@ -248,27 +248,7 @@ function addLeadingTargetTag(text, actor) {
     return `@${actor.username} ${value}`.trim();
 }
 
-ChatRouter.prototype.classify = function(message = {}, botUserId = this.transport?.botUserId) {
-    const text = String(message.text ?? '');
-    const lower = text.toLowerCase().trim();
 
-    const aiCommand = this.matcher.matchAi(lower);
-
-    const isReplyToBot =
-        message.isReply &&
-        !!botUserId &&
-        String(message.replyParentUserId || '') === String(botUserId);
-
-    if (aiCommand || isReplyToBot) {
-        return { kind: 'ai', command: aiCommand || null };
-    }
-
-    if (this.replyMode === 'all') {
-        return { kind: 'ai', command: null, ambient: true };
-    }
-
-    return { kind: 'none' };
-};
 
 
     /**
