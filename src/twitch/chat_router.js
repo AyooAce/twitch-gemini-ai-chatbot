@@ -252,17 +252,6 @@ ChatRouter.prototype.classify = function(message = {}, botUserId = this.transpor
     const text = String(message.text ?? '');
     const lower = text.toLowerCase().trim();
 
-        if (aiCommand || isReplyToBot) {
-        return { kind: 'ai', command: aiCommand || null };
-    }
-
-    if (this.replyMode === 'all') {
-        return { kind: 'ai', command: null, ambient: true };
-    }
-
-    return { kind: 'none' };
-};
-
     const aiCommand = this.matcher.matchAi(lower);
 
     const isReplyToBot =
@@ -279,7 +268,7 @@ ChatRouter.prototype.classify = function(message = {}, botUserId = this.transpor
     }
 
     return { kind: 'none' };
-}
+};
 
 
     /**
