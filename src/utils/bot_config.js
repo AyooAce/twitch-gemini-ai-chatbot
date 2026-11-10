@@ -458,10 +458,9 @@ export function sanitizeConfig(type, raw, context = {}) {
                 const l = Number(raw.chat_context_length);
                 if (Number.isFinite(l) && l >= 0) out.chat_context_length = l;
             }
-            if ('reply_mode' in raw && ['off', 'tag', 'reply', 'all'].includes(raw.reply_mode))
+            if ('reply_mode' in raw && ['off', 'tag', 'reply', 'all'].includes(raw.reply_mode)) {
     out.reply_mode = raw.reply_mode;
 }
-            }
             if ('ignore_emote_only_prompts' in raw) {
                 out.ignore_emote_only_prompts = Boolean(raw.ignore_emote_only_prompts);
             }
